@@ -1,0 +1,6 @@
+.env
+server_backup
+*.db
+zips/*
+dbs/*
+index

@@ -1,0 +1,10 @@
+services:
+  grep-cat:
+    build: .
+    container_name: grep-cat
+    restart: unless-stopped
+    volumes:
+      - ./dbs:/app/dbs:ro
+      - ./search_cache.db:/app/search_cache.db
+    ports:
+      - "8081:8081"
