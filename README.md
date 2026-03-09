@@ -68,10 +68,10 @@ docker compose up -d
 
 ```bash
 # Buscar domínio do cliente
-curl -u db:N3tc0nn@2021 "http://localhost:8081/search?q=empresa\.com\.br"
+curl -u user:password "http://localhost:8081/search?q=empresa\.com\.br"
 
 # Página 2 dos resultados
-curl -u db:N3tc0nn@2021 "http://localhost:8081/search?q=empresa\.com\.br&page=2"
+curl -u user:password "http://localhost:8081/search?q=empresa\.com\.br&page=2"
 ```
 
 ---
