@@ -4,3 +4,7 @@ server_backup
 zips/*
 dbs/*
 index
+cpf/*
+design-system.html
+.claude
+__pycache__

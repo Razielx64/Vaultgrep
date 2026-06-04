@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAULTGREP.</title>
+<style>
+@font-face {
+  font-family: 'Supply';
+  src: url('https://synsec.com.br/_next/static/media/Supply_Bold-s.p.b4dd3934.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Supply';
+  src: url('https://synsec.com.br/_next/static/media/Supply_Medium-s.p.c2fe7b48.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Supply';
+  src: url('https://synsec.com.br/_next/static/media/Supply_Regular-s.p.171b906e.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Supply';
+  src: url('https://synsec.com.br/_next/static/media/Supply_Light-s.p.1dc95be6.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Supply';
+  src: url('https://synsec.com.br/_next/static/media/Supply_UltraLight-s.p.96abd897.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6); }
+  50% { transform: scale(0.92); box-shadow: 0 0 0 6px rgba(124, 58, 237, 0); }
+}
+
+@keyframes bar-load {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* ── Streaming word: cor ciclando via JS scramble ─────────── */
+@keyframes stream-color {
+  0%   { color: #8b5cf6; }
+  33%  { color: #00e5ff; }
+  66%  { color: #c084fc; }
+  100% { color: #8b5cf6; }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0a0a0a;
+  --fg: #fff;
+  --cream: #f1eceb;
+  --gray-1: #484848;
+  --card: #c4c4c423;
+  --accent: #7c3aed;
+  --accent-hover: #8b5cf6;
+  --border-subtle: #ffffff1a;
+  --border-glass: #ffffff36;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Supply', monospace;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.logo-text {
+  display: inline-block;
+}
+
+.logo-dot {
+  animation: blink 1.2s step-end infinite;
+}
+
+.streaming-word {
+  display: inline-block;
+  animation: stream-color 2.4s ease-in-out infinite;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* MODE TABS */
+.mode-tabs {
+  display: flex;
+  border: 1px solid var(--border-subtle);
+}
+
+.mode-tab {
+  padding: 7px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.18s;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.mode-tab:last-child {
+  border-right: none;
+}
+
+.mode-tab:hover {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.04);
+}
+
+.mode-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* STATUS PILL */
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #00000084;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle);
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.7);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* MAIN */
+main {
+  flex: 1;
+  padding: 36px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* SECTION LABEL */
+.section-label {
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 8px;
+}
+
+/* SEARCH ROW */
+.search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.search-wrap {
+  flex: 1;
+  position: relative;
+  border: 1px solid var(--border-subtle);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-wrap:focus-within {
+  border-color: var(--border-glass);
+  box-shadow: 0 0 0 1px rgba(124,58,237,0.2), 0 0 20px rgba(124,58,237,0.08);
+}
+
+#q {
+  width: 100%;
+  height: 100%;
+  padding: 14px 18px;
+  background: #28282880;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Supply', monospace;
+  font-weight: 400;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+#q::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+
+/* EXECUTE BUTTON */
+#btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-family: 'Supply', monospace;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.18s, opacity 0.18s;
+  white-space: nowrap;
+  clip-path: polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+  flex-shrink: 0;
+}
+
+#btn:hover {
+  background: var(--accent-hover);
+}
+
+#btn:hover .btn-arrow {
+  transform: translate(2px, -2px);
+}
+
+#btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-arrow {
+  transition: transform 0.18s;
+  display: flex;
+  align-items: center;
+}
+
+/* INFO ROW */
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  min-height: 22px;
+}
+
+#info {
+  font-family: 'Supply', monospace;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.03em;
+}
+
+/* STATUS TAG */
+.status-tag {
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border: 1px solid transparent;
+}
+
+.status-tag.ok {
+  color: #22c55e;
+  border-color: rgba(34,197,94,0.3);
+  background: rgba(34,197,94,0.06);
+}
+
+.status-tag.err {
+  color: #ef4444;
+  border-color: rgba(239,68,68,0.3);
+  background: rgba(239,68,68,0.06);
+}
+
+.status-tag.loading {
+  color: var(--accent-hover);
+  border-color: rgba(124,58,237,0.3);
+  background: rgba(124,58,237,0.06);
+}
+
+/* BARS LOADER */
+.bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.bars span {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: var(--accent-hover);
+  transform-origin: bottom;
+  animation: bar-load 0.8s ease-in-out infinite;
+}
+
+.bars span:nth-child(1) { animation-delay: 0s; }
+.bars span:nth-child(2) { animation-delay: 0.1s; }
+.bars span:nth-child(3) { animation-delay: 0.2s; }
+.bars span:nth-child(4) { animation-delay: 0.3s; }
+.bars span:nth-child(5) { animation-delay: 0.4s; }
+
+/* RESULTS CARD */
+.results-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  clip-path: polygon(0 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%);
+  margin-bottom: 14px;
+  flex: 1;
+}
+
+#cpb {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(40,40,40,0.85);
+  border: 1px solid var(--border-subtle);
+  color: rgba(255,255,255,0.5);
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: none;
+  z-index: 10;
+}
+
+#cpb:hover {
+  background: rgba(60,60,60,0.9);
+  color: var(--fg);
+  border-color: var(--border-glass);
+}
+
+#cpb.copied {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+#out {
+  padding: 40px 20px 24px 20px;
+  min-height: 300px;
+  max-height: 60vh;
+  overflow: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 400;
+  font-size: 0.8rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: rgba(255,255,255,0.8);
+}
+
+#out::-webkit-scrollbar { width: 4px; }
+#out::-webkit-scrollbar-track { background: transparent; }
+#out::-webkit-scrollbar-thumb { background: var(--border-glass); }
+
+.ph {
+  color: rgba(255,255,255,0.2);
+  font-style: italic;
+}
+
+/* PAGINATION */
+#pg {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pg-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: rgba(255,255,255,0.4);
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.pg-btn:hover:not(:disabled) {
+  border-color: var(--border-glass);
+  color: var(--fg);
+}
+
+.pg-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+#pginfo {
+  font-family: 'Supply', monospace;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.05em;
+}
+
+/* FOOTER */
+footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.footer-brand {
+  font-family: 'Supply', monospace;
+  font-weight: 700;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.2);
+}
+
+#fc {
+  font-family: 'Supply', monospace;
+  font-weight: 400;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.2);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="logo-text">VAULTGREP</span><span class="logo-dot">.</span></div>
+  <div class="header-right">
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tg" onclick="sw('grep')">GREP -aEr</button>
+      <button class="mode-tab" id="tc" onclick="sw('cat')">CAT</button>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      ONLINE
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="section-label" id="mode-label">GREP -aEr</div>
+  <div class="search-row">
+    <div class="search-wrap">
+      <input type="text" id="q" placeholder="google.com.br" autofocus>
+    </div>
+    <button id="btn" onclick="go()">
+      <span id="btn-label">GREP</span>
+      <span class="btn-arrow">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 11.5L11.5 2.5M11.5 2.5H5.5M11.5 2.5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </button>
+  </div>
+
+  <div class="info-row">
+    <span id="info"></span>
+    <span class="status-tag" id="sts"></span>
+  </div>
+
+  <div class="results-card">
+    <button id="cpb" onclick="cp()">COPY</button>
+    <div id="out"><span class="ph">resultados vao aparecer aqui...</span></div>
+  </div>
+
+  <div id="pg">
+    <button class="pg-btn" id="pgprev" onclick="goPage(-1)">&#8592; Anterior</button>
+    <span id="pginfo"></span>
+    <button class="pg-btn" id="pgnext" onclick="goPage(1)">Pr&#243;xima &#8594;</button>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-brand">VAULTGREP &mdash; INTERNAL TOOL</span>
+  <span id="fc">X:0000 | Y:0000</span>
+</footer>
+
+<script>
+const D = id => document.getElementById(id);
+const PS = 5000;
+let mode = 'grep', curPage = 1, totalPages = 1, lastQ = '', allLines = [], sMode = false;
+const emptyBuf = () => ({
+  out: '<span class="ph">resultados vao aparecer aqui...</span>',
+  info: '',
+  stsClass: 'status-tag',
+  stsHtml: '',
+  page: 1,
+  totalPages: 1,
+  lastQ: '',
+  pgDisplay: 'none',
+  pgInfo: '',
+  pgprevDis: true,
+  pgnextDis: true,
+  qVal: '',
+  allLines: [],
+  sMode: false
+});
+const buf = { grep: emptyBuf(), cat: emptyBuf() };
+
+document.addEventListener('mousemove', e => {
+  const x = String(e.clientX).padStart(4, '0');
+  const y = String(e.clientY).padStart(4, '0');
+  D('fc').textContent = 'X:' + x + ' | Y:' + y;
+});
+
+const loadingHtml = '<div class="bars"><span></span><span></span><span></span><span></span><span></span></div>';
+
+function setStatus(type, html) {
+  D('sts').className = 'status-tag ' + type;
+  D('sts').innerHTML = html;
+}
+
+function sw(m) {
+  buf[mode] = {
+    out: D('out').innerHTML,
+    info: D('info').textContent,
+    stsClass: D('sts').className,
+    stsHtml: D('sts').innerHTML,
+    page: curPage,
+    totalPages: totalPages,
+    lastQ: lastQ,
+    pgDisplay: D('pg').style.display,
+    pgInfo: D('pginfo').textContent,
+    pgprevDis: D('pgprev').disabled,
+    pgnextDis: D('pgnext').disabled,
+    qVal: D('q').value,
+    allLines: [...allLines],
+    sMode: sMode
+  };
+  mode = m;
+  const s = buf[m];
+  D('out').innerHTML = s.out;
+  D('info').textContent = s.info;
+  D('sts').className = s.stsClass;
+  D('sts').innerHTML = s.stsHtml;
+  curPage = s.page;
+  totalPages = s.totalPages;
+  lastQ = s.lastQ;
+  D('pg').style.display = s.pgDisplay;
+  D('pginfo').textContent = s.pgInfo;
+  D('pgprev').disabled = s.pgprevDis;
+  D('pgnext').disabled = s.pgnextDis;
+  D('q').value = s.qVal;
+  allLines = s.allLines;
+  sMode = s.sMode;
+
+  D('tg').className = 'mode-tab';
+  D('tc').className = 'mode-tab';
+
+  if (m === 'grep') {
+    D('tg').className = 'mode-tab active';
+    D('q').placeholder = 'google.com.br';
+    D('btn-label').textContent = 'GREP';
+    D('mode-label').textContent = 'GREP -aEr';
+  } else {
+    D('tc').className = 'mode-tab active';
+    D('q').placeholder = 'escape60.com.br';
+    D('btn-label').textContent = 'CAT';
+    D('mode-label').textContent = 'CAT';
+  }
+  D('q').focus();
+}
+
+D('q').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+
+function showP(n) {
+  curPage = n;
+  const s = (n - 1) * PS;
+  D('out').textContent = allLines.slice(s, s + PS).join('\n');
+  D('pginfo').textContent = 'P\xe1g ' + n + ' / ' + totalPages;
+  D('pgprev').disabled = n <= 1;
+  D('pgnext').disabled = n >= totalPages;
+}
+
+function goPage(d) {
+  if (d === -1 && curPage <= 1 || d === 1 && curPage >= totalPages) return;
+  if (sMode) showP(curPage + d);
+  else go(curPage + d);
+}
+
+function cp() {
+  const t = D('out').textContent;
+  if (!t) return;
+  function ok() {
+    const b = D('cpb');
+    b.textContent = 'COPIED!';
+    b.classList.add('copied');
+    setTimeout(() => { b.textContent = 'COPY'; b.classList.remove('copied'); }, 1500);
+  }
+  function fb() {
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).then(ok).catch(fb);
+  } else {
+    fb();
+  }
+}
+
+async function go(pg) {
+  const q = D('q').value.trim();
+  if (!q) return;
+  if (q !== lastQ) pg = 1;
+  lastQ = q;
+  curPage = pg || 1;
+  const b = D('btn');
+  const lb = mode === 'grep' ? 'GREP' : 'CAT';
+  b.disabled = true;
+  D('btn-label').textContent = '...';
+  setStatus('loading', loadingHtml + ' executando');
+  D('out').innerHTML = '';
+  D('info').textContent = '';
+  D('cpb').style.display = 'none';
+  D('pg').style.display = 'none';
+  const t0 = performance.now();
+  const el = () => ((performance.now() - t0) / 1000).toFixed(2);
+  try {
+    if (mode === 'cat') {
+      const r = await fetch('/cat?file=' + encodeURIComponent(q));
+      const txt = await r.text();
+      if (r.ok) setStatus('ok', r.status + ' OK');
+      else setStatus('err', r.status + '');
+      D('info').textContent = el() + 's \xb7 cat ' + q;
+      D('out').textContent = txt || (r.ok ? '(arquivo vazio)' : 'Erro ' + r.status);
+      D('cpb').style.display = 'block';
+      return;
+    }
+    const r = await fetch('/search?q=' + encodeURIComponent(q) + '&page=' + curPage);
+    if (!r.ok) {
+      setStatus('err', 'HTTP ' + r.status);
+      D('out').textContent = await r.text() || 'Erro ' + r.status;
+      D('cpb').style.display = 'block';
+      return;
+    }
+    if (r.headers.get('X-Stream') === '1') {
+      sMode = true;
+      allLines = [];
+      setStatus('loading', loadingHtml + ' recebendo...');
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let rbuf = '', eofTotal = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (value) rbuf += dec.decode(value, { stream: !done });
+        let nl;
+        while ((nl = rbuf.indexOf('\n')) !== -1) {
+          const line = rbuf.slice(0, nl);
+          rbuf = rbuf.slice(nl + 1);
+          if (line.startsWith('__EOF__')) {
+            eofTotal = parseInt(line.slice(7)) || allLines.length;
+          } else if (line) {
+            allLines.push(line);
+          }
+        }
+        if (allLines.length > 0) {
+          D('out').textContent = allLines.slice(0, PS).join('\n');
+          D('info').innerHTML = allLines.length + ' linhas \xb7 ' + el() + 's \xb7 <span class="streaming-word">streaming...</span>';
+        }
+        if (done) break;
+      }
+      totalPages = Math.ceil(allLines.length / PS) || 1;
+      if (allLines.length === 0) {
+        D('out').textContent = '(nenhum resultado)';
+      } else {
+        showP(1);
+      }
+      setStatus('ok', '200 OK');
+      D('info').textContent = (eofTotal || allLines.length) + ' linhas \xb7 ' + el() + 's \xb7 grep -aEr \'' + q + '\' .';
+      D('cpb').style.display = 'block';
+      if (totalPages > 1) {
+        D('pg').style.display = 'flex';
+        D('pgprev').disabled = true;
+        D('pgnext').disabled = false;
+      }
+    } else {
+      sMode = false;
+      const tp = parseInt(r.headers.get('X-Total-Pages') || '1');
+      const tl = parseInt(r.headers.get('X-Total-Lines') || '0');
+      totalPages = tp;
+      const txt = await r.text();
+      const ln = txt.split('\n').filter(l => l.trim()).length;
+      setStatus('ok', r.status + ' OK');
+      const li = tl > 0 ? tl + ' linhas' : ln + ' linhas';
+      const pi = tp > 1 ? ' \xb7 p\xe1g ' + curPage + '/' + tp : '';
+      D('info').textContent = li + pi + ' \xb7 ' + el() + 's \xb7 grep -aEr \'' + q + '\' .';
+      D('out').textContent = txt || '(nenhum resultado)';
+      D('cpb').style.display = 'block';
+      if (tp > 1) {
+        D('pg').style.display = 'flex';
+        D('pginfo').textContent = 'P\xe1g ' + curPage + ' / ' + tp;
+        D('pgprev').disabled = curPage <= 1;
+        D('pgnext').disabled = curPage >= tp;
+      }
+    }
+  } catch(e) {
+    setStatus('err', 'ERRO');
+    D('out').textContent = 'Falha:\n' + e.message;
+  } finally {
+    b.disabled = false;
+    D('btn-label').textContent = lb;
+  }
+}
+
+// ── Character scramble effects ────────────────────────────
+const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@!$%&*[]{}|/\\<>=+~^';
+const SCRAMBLE_CHARS_SM = 'abcdefghijklmnopqrstuvwxyz0123456789#@!$%&*<>[]|=+';
+
+function randChar(pool) {
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Logo: scramble periódico — caracteres revelados progressivamente
+(function initLogoScramble() {
+  const el = document.querySelector('.logo-text');
+  const original = 'VAULTGREP';
+
+  function scramble() {
+    let step = 0;
+    const steps = 14;
+    const id = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      el.textContent = original.split('').map((ch, i) =>
+        Math.random() < progress ? ch : randChar(SCRAMBLE_CHARS)
+      ).join('');
+      if (step >= steps) {
+        clearInterval(id);
+        el.textContent = original;
+        setTimeout(scramble, 5000 + Math.random() * 4000);
+      }
+    }, 45);
+  }
+
+  setTimeout(scramble, 1500 + Math.random() * 1500);
+})();
+
+// Streaming word: 1-2 caracteres trocando rapidamente enquanto ativo
+setInterval(() => {
+  const el = document.querySelector('.streaming-word');
+  if (!el) return;
+  const orig = 'streaming...';
+  const chars = orig.split('');
+  // Só troca nos 9 chars alfabéticos, não nos pontos
+  const i = Math.floor(Math.random() * 9);
+  chars[i] = randChar(SCRAMBLE_CHARS_SM);
+  if (Math.random() > 0.6) {
+    const j = Math.floor(Math.random() * 9);
+    chars[j] = randChar(SCRAMBLE_CHARS_SM);
+  }
+  el.textContent = chars.join('');
+  setTimeout(() => {
+    const el2 = document.querySelector('.streaming-word');
+    if (el2) el2.textContent = orig;
+  }, 70);
+}, 120);
+</script>
+</body>
+</html>
