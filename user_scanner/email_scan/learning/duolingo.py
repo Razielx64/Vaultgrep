@@ -1,0 +1,64 @@
+import httpx
+
+from user_scanner.core.result import Result
+
+
+async def _check(email: str) -> Result:
+    show_url = "https://duolingo.com"
+    headers = {
+        "authority": "www.duolingo.com",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
+        "Referer": "https://www.duolingo.com/",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            response = await client.get(
+                "https://www.duolingo.com/2017-06-30/users",
+                params={"email": email},
+                headers=headers,
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                # Duolingo returns a list of users matching the email
+                if data.get("users") and len(data["users"]) > 0:
+                    user = data["users"][0]
+                    extra = {}
+                    media = {}
+
+                    if user.get("name"):
+                        extra["name"] = user["name"]
+                    if user.get("username"):
+                        extra["username"] = user["username"]
+                    if "streak" in user:
+                        extra["streak"] = user["streak"]
+                    if "hasPlus" in user:
+                        extra["has_plus"] = user["hasPlus"]
+                    if "hasGoogleId" in user:
+                        extra["has_google_id"] = user["hasGoogleId"]
+                    if "hasFacebookId" in user:
+                        extra["has_facebook_id"] = user["hasFacebookId"]
+
+                    pic = user.get("picture")
+                    if pic:
+                        if pic.startswith("//"):
+                            pic = "https:" + pic
+                        media["avatar"] = pic
+
+                    return Result.taken(extra=extra, media=media, url=show_url)
+                else:
+                    return Result.available(url=show_url)
+
+            return Result.error(f"HTTP {response.status_code}")
+
+    except httpx.TimeoutException:
+        return Result.error("Connection timed out")
+    except Exception as e:
+        return Result.error(e)
+
+
+async def validate_duolingo(email: str) -> Result:
+    return await _check(email)

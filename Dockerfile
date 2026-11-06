@@ -5,8 +5,25 @@ RUN apt-get update -q && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# holehe (enumeração) + boto3 (rotação de IP) + user-scanner (curl_cffi/rich/colorama/socksio)
+RUN pip install --no-cache-dir \
+    "holehe==1.61" \
+    "boto3>=1.28" \
+    "httpx[http2]>=0.27,<0.29" \
+    "trio>=0.22" \
+    "curl_cffi>=0.7,<1" \
+    "rich>=13.0.0" \
+    "colorama>=0.4,<1" \
+    "socksio>=1.0,<2"
+
 COPY server.py .
+COPY cpf_enrich.py .
+COPY ollama_store.py .
+COPY email_osint.py .
+COPY vinculos.py .
+COPY user_scanner/ user_scanner/
 COPY frontend/ frontend/
 
-EXPOSE 8081
+EXPOSE 8082
 CMD ["python", "server.py"]

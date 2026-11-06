@@ -43,7 +43,15 @@ Crie um `.env` na raiz do projeto com as credenciais de acesso:
 ```env
 USERNAME_VAULT=admin
 PASSWORD_VAULT=suasenha
+QUERYBUSCAS_USER=...
+QUERYBUSCAS_PASS=...
+CAPSOLVER_API_KEY=...
+AWS_ACCESS=...
+AWS_SECRET=...
+AWS_REGION=us-east-1
 ```
+
+As credenciais `AWS_*` habilitam a rotação de IP via API Gateway (port do `IPRotate.py`) usada no lookup do emailosint.org — sem elas, a consulta roda direto.
 
 ---
 
@@ -73,6 +81,7 @@ python3 server.py
 | `GET /` | Interface web |
 | `GET /search?q=<termo>&page=<n>` | Busca com streaming em `dbs/` |
 | `GET /cat?file=<caminho>` | Leitura de arquivo dentro de `dbs/` |
+| `GET /email?q=<email>` | OSINT de e-mail (holehe + emailosint.org) |
 | `GET /health` | Health check |
 
 ---
